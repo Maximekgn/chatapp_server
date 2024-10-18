@@ -7,7 +7,7 @@
     { "src": "/(.*)", "dest": "/app.ts" }
   ],
   "env": {
-    "DATABASE_URL": "@database_url",
+    "DATABASE_URL":  "@database_url",
     "JWT_SECRET": "@jwt_secret"
   }
 }
