@@ -9,7 +9,10 @@ const bcrypt = require("bcrypt");
 
 //---------------- Middleware ----------------
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: "*",
+    credentials: true,
+}));
 app.get("/", (req, res) => {
     res.send("Welcome to your online chat server!");
 });
