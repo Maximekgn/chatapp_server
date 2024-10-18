@@ -1,4 +1,4 @@
-import express, { Request, Response, NextFunction } from "express";
+const express = require("express");
 const app = express();
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
@@ -14,7 +14,7 @@ app.use(cors({
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
 }));
-app.use("*", (req: Request, res: Response, next: NextFunction) => {
+app.use("*", (req, res, next) => {
     console.log("Request received ", req.method, req.url);
     next();
 });
