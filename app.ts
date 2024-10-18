@@ -14,7 +14,7 @@ app.use(cors({
     methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
 }));
-app.all("*", (req, res, next) => {
+app.use("*", (req, res, next) => {
     console.log("Request received ", req.method, req.url);
     next();
 });
