@@ -9,7 +9,11 @@ const bcrypt = require("bcrypt");
 
 //---------------- Middleware ----------------
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+}));
 app.all("*", (req, res, next) => {
     console.log("Request received ", req.method, req.url);
     next();
