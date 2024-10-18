@@ -23,6 +23,7 @@ app.all("*", (req, res, next) => {
 const PORT = process.env.PORT || 3500;
 
 app.get("/test", (req, res) => {
+    console.log("test is working!");
     res.send("test is working!");
 });
 
