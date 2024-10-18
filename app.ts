@@ -21,6 +21,12 @@ app.all("*", (req, res, next) => {
 
 //---------------- Server ----------------
 const PORT = process.env.PORT || 3500;
+
+app.get("/test", (req, res) => {
+    res.send("test is working!");
+});
+
+
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
