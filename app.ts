@@ -13,8 +13,9 @@ app.use(cors({
     origin: "*",
     credentials: true,
 }));
-app.get("/", (req, res) => {
-    res.send("Welcome to your online chat server!");
+app.all("*", (req, res, next) => {
+    console.log("Request received ", req.method, req.url);
+    next();
 });
 
 //---------------- Server ----------------
@@ -24,6 +25,9 @@ app.listen(PORT, () => {
 });
 
 //--------------- API Routes ---------------
+app.get("/", (req, res) => {
+    res.send("Welcome to your online chat server!");
+});
 
 // Register user
 app.post("/register", async (req, res) => {
