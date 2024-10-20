@@ -1,11 +1,13 @@
 const express = require("express");
-const app = express();
 const { PrismaClient } = require("@prisma/client");
-const prisma = new PrismaClient();
-require("dotenv").config();
+const dotenv = require("dotenv");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
+
+const app = express();
+const prisma = new PrismaClient();
+dotenv.config();
 
 //---------------- Middleware ----------------
 app.use(express.json());
@@ -26,7 +28,6 @@ app.get("/test", (req, res) => {
     console.log("test is working!");
     res.send("test is working!");
 });
-
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
