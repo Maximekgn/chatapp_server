@@ -10,23 +10,30 @@ const prisma = new PrismaClient();
 dotenv.config();
 
 //---------------- Middleware ----------------
+const cors = require('cors');
+
 app.use(express.json());
+
 app.use(cors({
-    credentials: true
+  origin: function (origin, callback) {
+    callback(null, true); // autorise toutes les origines
+  },
+  credentials: true
 }));
 
 app.use("*", (req, res, next) => {
-    console.log("Request received ", req.method, req.url , req.ip);
-    next();
+  console.log("Request received ", req.method, req.url, req.ip);
+  next();
 });
 
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Credentials', true);
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,UPDATE,OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
-    next();
-  });
+  const origin = req.headers.origin;
+  res.header('Access-Control-Allow-Credentials', true);
+  res.header('Access-Control-Allow-Origin', origin); // Utilise l'origine de la requête
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,UPDATE,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
+  next();
+});
 
 //---------------- Server ----------------
 const PORT = process.env.PORT || 3500;
