@@ -12,14 +12,21 @@ dotenv.config();
 //---------------- Middleware ----------------
 app.use(express.json());
 app.use(cors({
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true
 }));
+
 app.use("*", (req, res, next) => {
-    console.log("Request received ", req.method, req.url);
+    console.log("Request received ", req.method, req.url , req.ip);
     next();
 });
+
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Credentials', true);
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,UPDATE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
+    next();
+  });
 
 //---------------- Server ----------------
 const PORT = process.env.PORT || 3500;
