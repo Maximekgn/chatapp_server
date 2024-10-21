@@ -140,6 +140,7 @@ app.get("/user", async (req, res) => {
         res.status(200).json({
             username: user.username,
             email: user.email,
+            createdAt: user.createdAt
         });
     } catch (error) {
         console.error("Get user error:", error);
