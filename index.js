@@ -3,7 +3,6 @@ const { PrismaClient } = require("@prisma/client");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
 
 const app = express();
 const prisma = new PrismaClient();
@@ -66,13 +65,13 @@ app.post("/register", async (req, res) => {
         }
 
         // Hash the password before saving it
-        const hashedPassword = await bcrypt.hash(password, 10);
+        //const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = await prisma.user.create({
             data: {
                 username,
                 email,
-                password: hashedPassword, // Save hashed password
+                password: password, // Save hashed password
             },
         });
         
@@ -102,8 +101,8 @@ app.post("/login", async (req, res) => {
         }
 
         // Check the password
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
+        //const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (password !== user.password) {
             return res.status(400).json({ message: "Invalid username or password" });
         }
 
