@@ -2,7 +2,6 @@ const express = require("express");
 const { PrismaClient } = require("@prisma/client");
 const dotenv = require("dotenv");
 const cors = require("cors");
-const jwt = require("jsonwebtoken");
 
 const app = express();
 const prisma = new PrismaClient();
@@ -64,22 +63,20 @@ app.post("/register", async (req, res) => {
             return res.status(400).json({ message: "Username already exists" });
         }
 
-        // Hash the password before saving it
-        //const hashedPassword = await bcrypt.hash(password, 10);
-
         const user = await prisma.user.create({
             data: {
                 username,
                 email,
-                password: password, // Save hashed password
+                password: password,
             },
         });
-        
-        const token = jwt.sign({ userId: user.id, username: user.username, email: user.email }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
         res.status(201).json({
             message: "User created successfully",
-            token,
+            user: {
+                username: user.username,
+                email: user.email,
+            },
         });
     } catch (error) {
         console.error("Registration error:", error);
@@ -100,17 +97,16 @@ app.post("/login", async (req, res) => {
             return res.status(400).json({ message: "Invalid username or password" });
         }
 
-        // Check the password
-        //const isPasswordValid = await bcrypt.compare(password, user.password);
         if (password !== user.password) {
             return res.status(400).json({ message: "Invalid username or password" });
         }
 
-        const token = jwt.sign({ userId: user.id, username: user.username, email: user.email }, process.env.JWT_SECRET, { expiresIn: '30d' });
-
         res.status(200).json({
             message: "Login successful",
-            token,
+            user: {
+                username: user.username,
+                email: user.email,
+            },
         });
     } catch (error) {
         console.error("Login error:", error);
@@ -118,20 +114,17 @@ app.post("/login", async (req, res) => {
     }
 });
 
-// Logout user (In this case, just a client-side action to delete the token)
+// Logout user
 app.post("/logout", (req, res) => {
-    // Clear the client-side token
     res.status(200).json({ message: "Logged out successfully" });
 });
 
-// Get user information (Protected route)
-app.get("/user", async (req, res) => {
-    const token = req.headers.authorization?.split(" ")[1]; // Extract token from Authorization header
-    if (!token) return res.status(401).json({ message: "Unauthorized" });
+// Get user information
+app.get("/user/:userId", async (req, res) => {
+    const { userId } = req.params;
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await prisma.user.findUnique({ where: { id: decoded.userId } });
+        const user = await prisma.user.findUnique({ where: { id: parseInt(userId) } });
         
         if (!user) {
             return res.status(404).json({ message: "User not found" });
@@ -144,21 +137,18 @@ app.get("/user", async (req, res) => {
         });
     } catch (error) {
         console.error("Get user error:", error);
-        res.status(403).json({ message: "Invalid token" });
+        res.status(500).json({ message: "An error occurred while fetching user data" });
     }
 });
 
 // Update user (example for updating username and email)
-app.put("/user", async (req, res) => {
-    const token = req.headers.authorization?.split(" ")[1];
-    if (!token) return res.status(401).json({ message: "Unauthorized" });
+app.put("/user/:userId", async (req, res) => {
+    const { userId } = req.params;
+    const { username, email } = req.body;
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const { username, email } = req.body;
-
         const updatedUser = await prisma.user.update({
-            where: { id: decoded.userId },
+            where: { id: parseInt(userId) },
             data: { username, email },
         });
 
