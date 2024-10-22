@@ -2,6 +2,7 @@ const express = require("express");
 const { PrismaClient } = require("@prisma/client");
 const dotenv = require("dotenv");
 const cors = require("cors");
+const jwt = require("jsonwebtoken");    
 
 const app = express();
 const prisma = new PrismaClient();
@@ -28,9 +29,23 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Credentials', true);
   res.header('Access-Control-Allow-Origin', origin); // Utilise l'origine de la requête
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,UPDATE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
+  res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept, Authorization');
   next();
 });
+
+// Middleware pour vérifier le token JWT
+const verifyToken = (req, res, next) => {
+  const token = req.headers['authorization'];
+  if (!token) return res.status(403).json({ message: "Un token est requis pour l'authentification" });
+  
+  try {
+    const decoded = jwt.verify(token.split(' ')[1], process.env.JWT_SECRET);
+    req.user = decoded;
+  } catch (err) {
+    return res.status(401).json({ message: "Token invalide" });
+  }
+  return next();
+};
 
 //---------------- Server ----------------
 const PORT = process.env.PORT || 3500;
@@ -71,12 +86,15 @@ app.post("/register", async (req, res) => {
             },
         });
 
+        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
         res.status(201).json({
             message: "User created successfully",
             user: {
                 username: user.username,
                 email: user.email,
             },
+            token: token
         });
     } catch (error) {
         console.error("Registration error:", error);
@@ -101,12 +119,15 @@ app.post("/login", async (req, res) => {
             return res.status(400).json({ message: "Invalid username or password" });
         }
 
+        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
         res.status(200).json({
             message: "Login successful",
             user: {
                 username: user.username,
                 email: user.email,
             },
+            token: token
         });
     } catch (error) {
         console.error("Login error:", error);
@@ -119,48 +140,3 @@ app.post("/logout", (req, res) => {
     res.status(200).json({ message: "Logged out successfully" });
 });
 
-// Get user information
-app.get("/user/:userId", async (req, res) => {
-    const { userId } = req.params;
-
-    try {
-        const user = await prisma.user.findUnique({ where: { id: parseInt(userId) } });
-        
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        res.status(200).json({
-            username: user.username,
-            email: user.email,
-            createdAt: user.createdAt
-        });
-    } catch (error) {
-        console.error("Get user error:", error);
-        res.status(500).json({ message: "An error occurred while fetching user data" });
-    }
-});
-
-// Update user (example for updating username and email)
-app.put("/user/:userId", async (req, res) => {
-    const { userId } = req.params;
-    const { username, email } = req.body;
-
-    try {
-        const updatedUser = await prisma.user.update({
-            where: { id: parseInt(userId) },
-            data: { username, email },
-        });
-
-        res.status(200).json({
-            message: "User updated successfully",
-            user: {
-                username: updatedUser.username,
-                email: updatedUser.email,
-            },
-        });
-    } catch (error) {
-        console.error("Update user error:", error);
-        res.status(500).json({ message: "An error occurred during user update" });
-    }
-});
