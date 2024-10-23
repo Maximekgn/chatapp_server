@@ -3,7 +3,7 @@ const { PrismaClient } = require("@prisma/client");
 const dotenv = require("dotenv");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");    
-
+const cookieParser = require("cookie-parser");
 
 const app = express();
 const prisma = new PrismaClient();
@@ -12,7 +12,7 @@ dotenv.config();
 //---------------- Middleware ----------------
 
 app.use(express.json());
-
+app.use(cookieParser());
 app.use(cors({
   origin: function (origin, callback) {
     callback(null, true); // autorise toutes les origines
@@ -34,26 +34,18 @@ app.use((req, res, next) => {
   next();
 });
 
-// Middleware pour vérifier le token JWT
-const verifyToken = (req, res, next) => {
+// middleware to check if the user is authenticated
+app.use((req, res, next) => {
+  const token = req.cookies.authToken;
+  if (req.url === "/login" || req.url === "/register") return next();
+  if (!token) return res.status(401).json({ message: "Unauthorized" });
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.status(401).json({ message: "Unauthorized" });
+    req.user = user;
+    next();
+  });
+});
 
-    if (req.url === "/register" || req.url === "/login") {
-        return next();
-    }
-
-  const token = req.headers['authorization'];
-  if (!token) return res.status(403).json({ message: "A token is required for authentication" });
-  
-  try {
-    const decoded = jwt.verify(token.split(' ')[1], process.env.JWT_SECRET);
-    req.user = decoded;
-  } catch (err) {
-    return res.status(401).json({ message: "Invalid token" });
-  }
-  return next();
-};
-
-app.use(verifyToken);
 //---------------- Server ----------------
 const PORT = process.env.PORT || 3500;
 
@@ -128,15 +120,9 @@ app.post("/login", async (req, res) => {
 
         const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
-        res.status(200).json({
-            message: "Login successful",
-            user: {
-                username: user.username,
-                email: user.email,
-                createdAt: user.createdAt
-            },
-            token: token
-        });
+        res.cookie("authToken", token, { httpOnly: true, secure: true, sameSite: "strict" });
+        res.status(200).json({ message: "Logged in successfully" });
+
     } catch (error) {
         console.error("Login error:", error);
         res.status(500).json({ message: "An error occurred during login" });
