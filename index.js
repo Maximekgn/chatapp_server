@@ -41,17 +41,18 @@ const verifyToken = (req, res, next) => {
     }
 
   const token = req.headers['authorization'];
-  if (!token) return res.status(403).json({ message: "Un token est requis pour l'authentification" });
+  if (!token) return res.status(403).json({ message: "A token is required for authentication" });
   
   try {
     const decoded = jwt.verify(token.split(' ')[1], process.env.JWT_SECRET);
     req.user = decoded;
   } catch (err) {
-    return res.status(401).json({ message: "Token invalide" });
+    return res.status(401).json({ message: "Invalid token" });
   }
   return next();
 };
 
+app.use(verifyToken);
 //---------------- Server ----------------
 const PORT = process.env.PORT || 3500;
 
@@ -146,3 +147,7 @@ app.post("/logout", (req, res) => {
     res.status(200).json({ message: "Logged out successfully" });
 });
 
+// to check token
+app.get("/check-auth", (req, res) => {
+    res.status(200).json({ message: "Token is valid" });
+});
