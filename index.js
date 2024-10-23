@@ -35,6 +35,11 @@ app.use((req, res, next) => {
 
 // Middleware pour vérifier le token JWT
 const verifyToken = (req, res, next) => {
+
+    if (req.url === "/register" || req.url === "/login") {
+        return next();
+    }
+
   const token = req.headers['authorization'];
   if (!token) return res.status(403).json({ message: "Un token est requis pour l'authentification" });
   
