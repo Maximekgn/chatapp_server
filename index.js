@@ -131,6 +131,7 @@ app.post("/login", async (req, res) => {
             user: {
                 username: user.username,
                 email: user.email,
+                createdAt: user.createdAt
             },
             token: token
         });
