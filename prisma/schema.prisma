@@ -22,3 +22,5 @@ model User {
   password  String
   creationDate DateTime @default(now())
 }
+
+export { User };

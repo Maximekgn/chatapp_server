@@ -1,140 +1,28 @@
-const express = require("express");
-const { PrismaClient } = require("@prisma/client");
-const dotenv = require("dotenv");
-const cors = require("cors");
-const jwt = require("jsonwebtoken");    
-const cookieParser = require("cookie-parser");
-
+//----------- IMPORTS ----------------
+const express = require('express');
 const app = express();
-const prisma = new PrismaClient();
-dotenv.config();
+const cors = require('cors');
+const { addUser, getUser, loginUser } = require('./controllers/usersControler');
 
-//---------------- Middleware ----------------
+//----------- SERVER CONFIG ----------------
+const port = 3000;
 
+//----------- MIDDLEWARE ----------------
+app.use(cors());
 app.use(express.json());
-app.use(cookieParser());
-app.use(cors({
-  origin: function (origin, callback) {
-    callback(null, true); // autorise toutes les origines
-  },
-  credentials: true
-}));
 
-app.use("*", (req, res, next) => {
-  console.log("Request received ", req.method, req.url, req.ip);
-  next();
+
+//----------- ROUTES ----------------
+app.get('/', (req, res) => {
+  res.send('Welcome to server');
 });
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  res.header('Access-Control-Allow-Credentials', true);
-  res.header('Access-Control-Allow-Origin', origin); // Utilise l'origine de la requête
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,UPDATE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept, Authorization');
-  next();
+app.post('/addUser', addUser);
+app.get('/getUser', getUser);
+app.post('/loginUser', loginUser);
+
+//----------- SERVER START ----------------
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
 });
 
-// middleware to check if the user is authenticated
-app.use((req, res, next) => {
-  const token = req.cookies.authToken;
-  if (req.url === "/login" || req.url === "/register") return next();
-  if (!token) return res.status(401).json({ message: "Unauthorized" });
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(401).json({ message: "Unauthorized" });
-    req.user = user;
-    next();
-  });
-});
-
-//---------------- Server ----------------
-const PORT = process.env.PORT || 3500;
-
-app.get("/test", (req, res) => {
-    console.log("test is working!");
-    res.send("test is working!");
-});
-
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
-
-//--------------- API Routes ---------------
-app.get("/", (req, res) => {
-    res.send("Welcome to your online chat server!");
-});
-
-// Register user
-app.post("/register", async (req, res) => {
-    const { username, email, password } = req.body;
-    try {
-        if (!username || !email || !password) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-
-        // Check if user already exists
-        const existingUser = await prisma.user.findUnique({ where: { username } });
-        if (existingUser) {
-            return res.status(400).json({ message: "Username already exists" });
-        }
-
-        const user = await prisma.user.create({
-            data: {
-                username,
-                email,
-                password: password,
-            },
-        });
-
-        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-        res.status(201).json({
-            message: "User created successfully",
-            user: {
-                username: user.username,
-                email: user.email,
-            },
-            token: token
-        });
-    } catch (error) {
-        console.error("Registration error:", error);
-        res.status(500).json({ message: "An error occurred during registration" });
-    }
-});
-
-// Login user
-app.post("/login", async (req, res) => {
-    const { username, password } = req.body;
-    try {
-        if (!username || !password) {
-            return res.status(400).json({ message: "All fields are required" });
-        }
-
-        const user = await prisma.user.findUnique({ where: { username } });
-        if (!user) {
-            return res.status(400).json({ message: "Invalid username or password" });
-        }
-
-        if (password !== user.password) {
-            return res.status(400).json({ message: "Invalid username or password" });
-        }
-
-        const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, { expiresIn: '1h' });
-
-        res.cookie("authToken", token, { httpOnly: true, secure: true, sameSite: "strict" });
-        res.status(200).json({ message: "Logged in successfully" });
-
-    } catch (error) {
-        console.error("Login error:", error);
-        res.status(500).json({ message: "An error occurred during login" });
-    }
-});
-
-// Logout user
-app.post("/logout", (req, res) => {
-    res.status(200).json({ message: "Logged out successfully" });
-});
-
-// to check token
-app.get("/check-auth", (req, res) => {
-    res.status(200).json({ message: "Token is valid" });
-});
