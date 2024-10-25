@@ -5,7 +5,7 @@ const cors = require('cors');
 const { addUser, getUser, loginUser } = require('./controllers/usersControler');
 
 //----------- SERVER CONFIG ----------------
-const port = 3000;
+const port = 3500;
 
 //----------- MIDDLEWARE ----------------
 app.use(cors());
@@ -17,9 +17,9 @@ app.get('/', (req, res) => {
   res.send('Welcome to server');
 });
 
-app.post('/addUser', addUser);
-app.get('/getUser', getUser);
-app.post('/loginUser', loginUser);
+app.post('/addUser/:userName/:email/:password', addUser);
+app.get('/getUser/:userName', getUser);
+app.post('/loginUser/:userName/:password', loginUser);
 
 //----------- SERVER START ----------------
 app.listen(port, () => {
