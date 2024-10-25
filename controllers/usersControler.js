@@ -4,8 +4,7 @@ const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
 
 const addUser = async (req, res) => {
-    try 
-    {
+    try {
         const { username, email, password } = req.body;
         const user = await prisma.user.create({ data: { username, email, password } });
         console.log(`User ${user.username} created successfully`);
@@ -20,50 +19,62 @@ const addUser = async (req, res) => {
     }
 };
 
+const loginUser = async (req, res) => {
+    try {
+        // Vérification des données reçues
+        const { username, password } = req.body;
+
+        // Ajout d'une vérification pour les valeurs
+        if (!username || !password) {
+            return res.status(400).json({ message: "Username and password are required" });
+        }
+
+        // Recherche de l'utilisateur par nom d'utilisateur
+        const user = await prisma.user.findUnique({ where: { username } });
+
+        // Vérification si l'utilisateur existe et si le mot de passe est correct
+        if (!user || user.password !== password) {
+            return res.status(401).json({ message: "Invalid credentials" });
+        }
+
+        // Réponse en cas de succès
+        console.log(`User ${user.username} logged in successfully`);
+        res.status(200).json({ 
+            message: "Logged in successfully", 
+            data: {
+                user: { 
+                    id: user.id, 
+                    username: user.username, 
+                    email: user.email 
+                }
+            }
+        });
+    } catch (error) {
+        // Gestion des erreurs serveur
+        console.error("Login error:", error);
+        res.status(500).json({ message: "Login failed, please try again", error: error.message });
+    }
+};
+
+
 
 const getUser = async (req, res) => {
-    try 
-    {
-        const { userName } = req.params;
-        const user = await prisma.user.findUnique({ where: { userName: userName } });
+    try {
+        const { username } = req.params;
+        const user = await prisma.user.findUnique({ where: { username } });
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        console.log(user + "fetched successfully");
-        res.status(200).json({ message: "fetched successfully", user: user });
+        console.log(`User ${user.username} fetched successfully`);
+        res.status(200).json({ message: "User fetched successfully", user: { id: user.id, username: user.username, email: user.email } });
     } catch (error) {
-        res.status(500).json({ message: "Fetching failed , please try again" , error: error.message });
+        console.error("User fetch error:", error);
+        res.status(500).json({ message: "Fetching failed, please try again", error: error.message });
     }
 };
 
 
-const loginUser = async (req, res) => {
-    try 
-    {
-        const { userName, password } = req.body;
-        const user = await prisma.user.findUnique({ where: { userName: userName } });
-        
-        if (!user) 
-        {
-            return res.status(401).json({ message: "Invalid username or password" });
-        }
-        
-
-        const isPasswordValid = user.password === password;
-        
-        if (!isPasswordValid) 
-        {
-            return res.status(401).json({ message: "Invalid username or password" });
-        }
-        
-        console.log(`User ${user.userName} logged in successfully`);
-        res.status(200).json({ message: "Logged in successfully", user: { id: user.id, userName: user.userName, email: user.email } });
-    } catch (error) {
-        console.error("Login error:", error);
-        res.status(500).json({ message: "Login failed, please try again", error: error.message });
-    }
-};
 
 module.exports = { addUser, getUser, loginUser };
