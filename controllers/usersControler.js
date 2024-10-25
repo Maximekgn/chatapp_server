@@ -11,7 +11,7 @@ const addUser = async (req, res) => {
         console.log(user + "created successfully");
         res.status(200).json({ message: "User created successfully", user: user });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: "Creating failed , please try again" , error: error.message });
     }
 };
 
@@ -24,7 +24,7 @@ const getUser = async (req, res) => {
         console.log(user + "fetched successfully");
         res.status(200).json({ message: "fetched successfully", user: user });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: "Fetching failed , please try again" , error: error.message });
     }
 };
 
@@ -41,7 +41,7 @@ const loginUser = async (req, res) => {
         console.log(user + "logged in successfully");
         res.status(200).json({ message: "logged in successfully", user: user });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ message: "Login failed , please try again" , error: error.message });
     }
 };
 
