@@ -17,9 +17,9 @@ app.get('/', (req, res) => {
   res.send('Welcome to server');
 });
 
-app.post('/addUser/:userName/:email/:password', addUser);
-app.get('/getUser/:userName', getUser);
-app.post('/loginUser/:userName/:password', loginUser);
+app.post('/addUser', addUser);
+app.get('/getUser', getUser)
+app.post('/loginUser', loginUser);
 
 //----------- SERVER START ----------------
 app.listen(port, () => {
