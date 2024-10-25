@@ -13,14 +13,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
-
 model User {
   id        Int      @id @default(autoincrement())
-  username  String @unique
-  email     String  
+  username  String   @unique
+  email     String
   password  String
-  creationDate DateTime @default(now())
+  createdAt DateTime @default(now())
 }
-
-export { User };
