@@ -2,15 +2,21 @@
 
 const { PrismaClient } = require('@prisma/client');
 const prisma = new PrismaClient();
+const jwt = require('jsonwebtoken');
+
+
+const secretKey = 'secret';
 
 const addUser = async (req, res) => {
     try {
         const { username, email, password } = req.body;
         const user = await prisma.user.create({ data: { username, email, password } });
+        const token = jwt.sign({ userId: user.id }, secretKey, { expiresIn: '1h' });
         console.log(`User ${user.username} created successfully`);
         res.status(201).json({
             message: "User created successfully",
-            user: { id: user.id, username: user.username, email: user.email }
+            user: { id: user.id, username: user.username, email: user.email },
+            token: token
         });
     } catch (error) {
         console.error("User creation error:", error);
@@ -35,6 +41,7 @@ const loginUser = async (req, res) => {
         if (!user || user.password !== password) {
             return res.status(401).json({ message: "Invalid username or password" });
         }
+        const token = jwt.sign({ userId: user.id }, secretKey, { expiresIn: '1h' });
 
         console.log(`User ${user.username} logged in successfully`);
         res.status(200).json({ 
@@ -43,7 +50,8 @@ const loginUser = async (req, res) => {
                 id: user.id, 
                 username: user.username, 
                 email: user.email 
-            }
+            },
+            token: token
         });
     } catch (error) {
         console.error("Login error:", error);
@@ -71,4 +79,31 @@ const getUser = async (req, res) => {
     }
 };
 
-module.exports = { addUser, getUser, loginUser };
+
+const verifyToken = (req, res, next) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) {
+            return res.status(401).json({ message: "No token provided" });
+        }
+
+        const token = authHeader.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ message: "Invalid token format" });
+        }
+
+        jwt.verify(token, secretKey, (err, decoded) => {
+            if (err) {
+                return res.status(401).json({ message: "Invalid or expired token" });
+            }
+            req.userId = decoded.userId;
+            next();
+        });
+    } catch (error) {
+        console.error("Token verification error:", error);
+        return res.status(401).json({ message: "Token verification failed" });
+    }
+};
+
+
+module.exports = { addUser, getUser, loginUser, verifyToken };
